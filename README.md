@@ -5,6 +5,15 @@ for reflow soldering. The electronics are meant to be cheap (10$ range if
 ordered from China) and functional and not fancy. Similarily, the Arudino
 code is kept to a minimum, no bells and whistles included.
 
+## Status
+
+* Electronics: Mostly build but untested
+* Firmware: Basics only
+* Control design: Not even started
+* Documentation: Good enough for now
+
+All in all, we're miles from a working prototype :/
+
 ## Electronics
 
 ![Schematic](https://user-images.githubusercontent.com/7459936/32291142-7d529ce0-bf3c-11e7-81d5-0cea35ba904e.png)
