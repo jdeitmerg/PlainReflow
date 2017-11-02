@@ -8,9 +8,9 @@ code is kept to a minimum, no bells and whistles included.
 ## Status
 
 * Electronics: Mostly build but untested
-* Firmware: Basics only
+* Firmware: First prototype, needs testing with real hardware
 * Control design: Not even started
-* Documentation: Good enough for now
+* Documentation: Not good enough
 
 All in all, we're miles from a working prototype :/
 
