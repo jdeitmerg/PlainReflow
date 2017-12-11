@@ -27,7 +27,7 @@ Thread plot_thread = Thread();
 Thread control_thread = Thread();
 
 // variables for PID controller
-double PID_setpoint, PID_in, PID_out, PID_out_by_10;
+double PID_setpoint, PID_in, PID_out, PID_out_percent;
 
 // for slow PWM:
 const int pwm_window = 5000; // 5 seconds
@@ -58,11 +58,11 @@ void plot_callback(void) {
 
 void control_callback(void) {
   // control thread
-  PID_setpoint = 250; // constant for testing
+  PID_setpoint = 50; // constant for testing
   PID_in = measure_temperature();
 
   control_PID.Compute();
-  PID_out_by_10 = PID_out/10;
+  PID_out_percent = PID_out/pwm_window*100;
 
   unsigned long now = millis();
   if (now - pwm_start_time > pwm_window) {
@@ -175,7 +175,7 @@ void setup() {
   plotter.AddTimeGraph( "Reflow oven variables", 18000, // about 3 minutes
                           "PID Setpoint (°C)", PID_setpoint,
                           "PID Input (°C)", PID_in,
-                          "PID Output (10 ms)", PID_out_by_10,
+                          "PID Output (%)", PID_out_percent,
                           "Oven state (on/off)", oven_is_on);
 
   // Configure PID controller
