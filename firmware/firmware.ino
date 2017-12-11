@@ -1,6 +1,6 @@
-/* PlainReflow
+/* PlainReflow firmware file
  *
- * @file PlainReflow.ino
+ * @file firmware.ino
  * @author Jonas Deitmerg
  * @date 2017
  * @copyright MIT License
