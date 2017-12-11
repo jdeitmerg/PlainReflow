@@ -40,14 +40,16 @@ char oven_is_on = 0;
 PID control_PID(&PID_in, &PID_out, &PID_setpoint,2,5,1, DIRECT);
 
 // Digital outputs
+//     relay -> fan
+const int FAN = 3;
 //     relays -> heating elements
-const int HEATINGROD1 = 3;
-const int HEATINGROD2 = 4;
+const int HEATINGROD1 = 4;
+const int HEATINGROD2 = 5;
 //     MOSFET -> thermistor
 const int THERMISTOR_MOSFET = 13;
 
 // Analog input for temperature measurement: 
-const int TEMP_INP = A0;
+const int TEMP_INP = A7;
 
 void plot_callback(void) {
   // plotting thread
@@ -106,6 +108,8 @@ static double measure_temperature(void) {
     avg += analogRead(TEMP_INP);
   }
   avg /= 5;
+  // Disable thermistor again so it doesn't heat up / break
+  digitalWrite(THERMISTOR_MOSFET, HIGH);
 
   double inp_voltage = avg * 1.1 / 1023; // Reference voltage = 1.1V,
                                          // maximum value = 1023 (10 bits)
@@ -127,6 +131,8 @@ void setup() {
   oven_off();
   pinMode(HEATINGROD1, OUTPUT);
   pinMode(HEATINGROD2, OUTPUT);
+
+  pinMode(TEMP_INP, INPUT);
 
   // MOSFET for disabling thermistor:
   pinMode(THERMISTOR_MOSFET, OUTPUT);
