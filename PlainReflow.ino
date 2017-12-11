@@ -100,16 +100,34 @@ static double measure_temperature(void) {
   // First off: Enable thermistor
   digitalWrite(THERMISTOR_MOSFET, LOW);
   // Wait for filter cap to charge up (time constant is 100µs,
-  // we'll wait 50x that)
-  delay(5);
-  // Take several measurements and calculate average
-  double avg = 0;
-  for(int i=0; i<5; i++) {
-    avg += analogRead(TEMP_INP);
+  // we'll wait 10x that)
+  delayMicroseconds(1000);
+  /* Take several measurements and apply low pass filter
+   * As it turns out, the FIR lowpass with the lowest possible cutoff
+   * frequency is the moving average filter. We should only sample for
+   * ~10ms as this function is blocking. By reading one sample after the
+   * other, we should get into the 8kHz sampling rate range. Just enough
+   * to avoid most aliases with the analog lowpass cutoff at ~4.5kHz.
+   *
+   * By sampling for only 10ms every ~100ms, we will get plenty of
+   * aliasing in the sub 50Hz range. That can't be helped with this
+   * simple approach.
+   *
+   * We should see less than 10kHz*10ms = 100 samples. You need 7 bits
+   * to index 100 samples, each samle is 10 bits so the sum of all samples
+   * won't necessarily fit into 16 bits. What a shame.
+   */
+  uint32_t sum = 0;
+  uint16_t count = 0;
+  unsigned long start_time = millis();
+  while(millis()-start_time < 10) {
+  //while(count < 5) {
+    sum += analogRead(TEMP_INP);
+    count++;
   }
-  avg /= 5;
   // Disable thermistor again so it doesn't heat up / break
   digitalWrite(THERMISTOR_MOSFET, HIGH);
+  double avg = (double) sum / count;
 
   double inp_voltage = avg * 1.1 / 1023; // Reference voltage = 1.1V,
                                          // maximum value = 1023 (10 bits)
