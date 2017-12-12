@@ -12,6 +12,8 @@
  *  * "PID" by Brett Beauregard
  *  * "Plotter" by Devin Conley
  *  * "ArduinoThread" by Ivan Seidel
+ *  * "FIR Filter" by LeemanGeophysicalLLC - not very efficient but
+ *                                           get's the job done.
  *
  */
 
@@ -19,6 +21,7 @@
 #include <Plotter.h>
 #include <Thread.h>
 #include <ThreadController.h>
+#include <FIR.h>
 
 Plotter plotter; // for plotting over serial
 
@@ -50,6 +53,14 @@ const int THERMISTOR_MOSFET = 13;
 
 // Analog input for temperature measurement: 
 const int TEMP_INP = A7;
+
+/* The temperature signal is lowpass filtered using a
+ * moving average filter during the acquisition.
+ * The cutoff of that filter is still pretty high for
+ * a temperature signal, we need another FIR
+ * filter with the cutoff in the .5Hz range.
+ */
+FIR<double, 15> filt_2nd_stage;
 
 void plot_callback(void) {
   // plotting thread
@@ -121,7 +132,6 @@ static double measure_temperature(void) {
   uint16_t count = 0;
   unsigned long start_time = millis();
   while(millis()-start_time < 10) {
-  //while(count < 5) {
     sum += analogRead(TEMP_INP);
     count++;
   }
@@ -141,7 +151,7 @@ static double measure_temperature(void) {
   const double PTB = -5.775e-7;
   double temperature = 
     -(PTA/PTB/2)-sqrt((PTA/PTB/2)*(PTA/PTB/2)-(1-R_PT100/100)/PTB);
-  return(temperature);
+  return(filt_2nd_stage.processReading(temperature));
 }
 
 void setup() {
@@ -172,16 +182,23 @@ void setup() {
 
   // Set up serial plotter
   plotter.Begin(); // start plotter
-  plotter.AddTimeGraph( "Reflow oven variables", 18000, // about 3 minutes
+  plotter.AddTimeGraph( "Reflow oven variables", 6000,//18000, // about 3 minutes
                           "PID Setpoint (°C)", PID_setpoint,
                           "PID Input (°C)", PID_in,
-                          "PID Output (%)", PID_out_percent,
+                          //"PID Output (%)", PID_out_percent,
                           "Oven state (on/off)", oven_is_on);
 
   // Configure PID controller
   control_PID.SetOutputLimits(0, pwm_window);
   // turn PID controller on
   control_PID.SetMode(AUTOMATIC);
+
+  // Calculated using scipy.signal. Have a look at the "design" folder
+  double fir_coeffs[] = {
+        0.0367883 ,  0.05045512,  0.06366198,  0.07568267,  0.08583937,
+        0.09354893,  0.09836316,  0.1       ,  0.09836316,  0.09354893,
+        0.08583937,  0.07568267,  0.06366198,  0.05045512,  0.0367883 };
+  filt_2nd_stage.setFilterCoeffs(fir_coeffs);
 }
 
 void loop() {
