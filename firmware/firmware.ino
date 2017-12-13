@@ -22,6 +22,7 @@
 #include <Thread.h>
 #include <ThreadController.h>
 #include <FIR.h>
+#include "reflow_profile.h"
 
 Plotter plotter; // for plotting over serial
 
@@ -62,6 +63,16 @@ const int TEMP_INP = A7;
  */
 FIR<double, 15> filt_2nd_stage;
 
+/* The following values define the temperature profile. It consits of
+ * timestamps and temperatures at those timestamps. Between the
+ * timestamps, the temperature is interpolated linearly.
+ */
+const unsigned int tprofile_n = 5;
+const unsigned long tprofile_times[] = {30, 180, 220, 260, 300};
+const float tprofile_temps[] =         {80, 200, 235, 235,   0};
+reflow_profile tprofile(tprofile_n, tprofile_times, tprofile_temps);
+
+
 void plot_callback(void) {
   // plotting thread
   plotter.Plot();
@@ -69,7 +80,7 @@ void plot_callback(void) {
 
 void control_callback(void) {
   // control thread
-  PID_setpoint = 50; // constant for testing
+  PID_setpoint = tprofile.getval();
   PID_in = measure_temperature();
 
   control_PID.Compute();
@@ -185,7 +196,7 @@ void setup() {
   plotter.AddTimeGraph( "Reflow oven variables", 6000,//18000, // about 3 minutes
                           "PID Setpoint (°C)", PID_setpoint,
                           "PID Input (°C)", PID_in,
-                          //"PID Output (%)", PID_out_percent,
+                          "PID Output (%)", PID_out_percent,
                           "Oven state (on/off)", oven_is_on);
 
   // Configure PID controller
@@ -199,6 +210,7 @@ void setup() {
         0.09354893,  0.09836316,  0.1       ,  0.09836316,  0.09354893,
         0.08583937,  0.07568267,  0.06366198,  0.05045512,  0.0367883 };
   filt_2nd_stage.setFilterCoeffs(fir_coeffs);
+  tprofile.reset(); // Start the temperature profile
 }
 
 void loop() {
