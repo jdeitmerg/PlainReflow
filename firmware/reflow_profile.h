@@ -15,8 +15,7 @@ class reflow_profile {
          * arrays you pass are statically allocated and accessible
          * during all operations of this class's functions.
          *
-         * times are in seconds since restart was called, temperatures are
-         * in °C.
+         * times are in ms since restart was called, temperatures are in °C.
          */
         reflow_profile(unsigned int numvals, const unsigned long times[],
                        const float temperatures[]);

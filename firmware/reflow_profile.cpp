@@ -47,14 +47,14 @@ reflow_profile::reflow_profile(unsigned int numvals,
 }
 
 void reflow_profile::reset(void) {
-    reset_timestamp = millis()/1000;
+    reset_timestamp = millis();
 }
 
 float reflow_profile::getval(void) {
     // Find interval we're currently in
     // Interval 0 is from 0 to times[0], 1 is from times[0] to times[1]
     // and so on.
-    unsigned long ts = millis()/1000-reset_timestamp;
+    unsigned long ts = millis()-reset_timestamp;
     unsigned int interval = 0;
     while(timestamps[interval] <= ts) {
         interval++;

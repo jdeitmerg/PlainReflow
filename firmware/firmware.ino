@@ -68,10 +68,9 @@ FIR<double, 15> filt_2nd_stage;
  * timestamps, the temperature is interpolated linearly.
  */
 const unsigned int tprofile_n = 5;
-const unsigned long tprofile_times[] = {30, 180, 220, 260, 300};
+const unsigned long tprofile_times[] = {10000, 20000, 30000, 50000, 60000};
 const float tprofile_temps[] =         {80, 200, 235, 235,   0};
 reflow_profile tprofile(tprofile_n, tprofile_times, tprofile_temps);
-
 
 void plot_callback(void) {
   // plotting thread
