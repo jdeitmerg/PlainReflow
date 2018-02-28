@@ -2,7 +2,7 @@ PROJ_NAME=firmware.ino
 HEXFILE=$(PROJ_NAME).eigthanaloginpus.hex
 
 $(HEXFILE): $(PROJ_NAME)
-	arduino --verify $(PROJ_NAME)
+	arduino --verify --board arduino:avr:nano $(PROJ_NAME)
 	@# ToDo: If this fails, check for libraries and install them
 
 deploy: $(PROJ_NAME)
