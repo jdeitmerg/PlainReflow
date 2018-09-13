@@ -40,8 +40,12 @@ volatile unsigned long pwm_start_time;
 // only for plotting:
 char oven_is_on = 0;
 
-//Specify PID pointers and initial tuning parameters
-PID control_PID(&PID_in, &PID_out, &PID_setpoint,2,5,1, DIRECT);
+#define PID_Kp 2
+#define PID_Ki 5
+#define PID_Kd 1
+
+//Specify PID pointers and tuning parameters
+PID control_PID(&PID_in, &PID_out, &PID_setpoint, PID_Kp, PID_Ki, PID_Kd, DIRECT);
 
 // Digital outputs
 //     relay -> fan
@@ -68,13 +72,14 @@ FIR<double, 15> filt_2nd_stage;
  * timestamps, the temperature is interpolated linearly.
  */
 const unsigned int tprofile_n = 5;
-const unsigned long tprofile_times[] = {10000, 20000, 30000, 50000, 60000};
+const unsigned long tprofile_times[] = {10000000, 20000, 30000, 50000, 60000};
 const float tprofile_temps[] =         {80, 200, 235, 235,   0};
 reflow_profile tprofile(tprofile_n, tprofile_times, tprofile_temps);
 
 void plot_callback(void) {
   // plotting thread
   plotter.Plot();
+  //Serial.println(PID_in);
 }
 
 void control_callback(void) {
@@ -149,8 +154,12 @@ static double measure_temperature(void) {
   digitalWrite(THERMISTOR_MOSFET, HIGH);
   double avg = (double) sum / count;
 
-  double inp_voltage = avg * 1.1 / 1023; // Reference voltage = 1.1V,
-                                         // maximum value = 1023 (10 bits)
+  //return(filt_2nd_stage.processReading(avg));
+
+  // Reference voltage is supposed to be 1.1V. Measuring the actual
+  // temperature inicates it is a little too low.
+  // Maximum value @10 bits resolution: 1023
+  double inp_voltage = avg * 1.0598865 / 1023;
   // voltage divider 1k over PT100 thermistor connected to 5V
   double R_PT100 = 1000./(5./inp_voltage-1);
 
@@ -192,11 +201,21 @@ void setup() {
 
   // Set up serial plotter
   plotter.Begin(); // start plotter
-  plotter.AddTimeGraph( "Reflow oven variables", 6000,//18000, // about 3 minutes
+  String headline = "Reflow oven (PID constants: P=";
+  headline += String(PID_Kp);
+  headline += " I=";
+  headline += String(PID_Ki);
+  headline += " D=";
+  headline += String(PID_Kd);
+  headline += ")";
+  plotter.AddTimeGraph(headline,
+                          18000, // about 3 minutes
                           "PID Setpoint (°C)", PID_setpoint,
                           "PID Input (°C)", PID_in,
                           "PID Output (%)", PID_out_percent,
                           "Oven state (on/off)", oven_is_on);
+
+ // Serial.begin(115200);
 
   // Configure PID controller
   control_PID.SetOutputLimits(0, pwm_window);
